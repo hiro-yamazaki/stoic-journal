@@ -16,3 +16,6 @@ firebase.json
 .firebaserc
 .firebase/
 firebase-debug.log
+
+# 非共有メモ（_ プレフィックス。事業計画など公開しない）
+_*.md
