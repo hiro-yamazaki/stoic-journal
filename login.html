@@ -11,13 +11,19 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <script src="firebase.js"></script>
 </head>
-<body>
-    <div class="container" style="justify-content:center;align-items:center;height:100vh;display:flex;">
-        <div style="text-align:center;width:100%;">
-            <h1>Stoic Journal</h1>
-            <p>Googleアカウントでログインしてください</p>
-            <button id="google-login-btn" style="padding:14px 32px;font-size:1.1em;">Googleでログイン</button>
+<body class="login-screen">
+    <div class="login-card">
+        <div class="login-mark">
+            <svg width="48" height="48" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="7" y="10" width="24" height="18" rx="3" fill="#fffdf9" stroke="#9c5b3f" stroke-width="2.5"/>
+              <path d="M19 10v18" stroke="#9c5b3f" stroke-width="2"/>
+              <path d="M7 13c4-2 8-2 12 0 4-2 8-2 12 0" stroke="#9c5b3f" stroke-width="1.2" fill="none"/>
+            </svg>
         </div>
+        <h1 class="login-title">Stoic Journal</h1>
+        <p class="login-sub">一日の問いに答え、自分自身と対話する。<br>Googleアカウントで静かに始めましょう。</p>
+        <button id="google-login-btn" class="login-google">Googleでログイン</button>
+        <div class="login-foot">データはあなたのアカウントにのみ保存されます</div>
     </div>
     <script>
         document.getElementById('google-login-btn').addEventListener('click', function() {

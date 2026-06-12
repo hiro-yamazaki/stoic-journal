@@ -72,9 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
             emptyDiv.className = 'empty-state';
             emptyDiv.innerHTML = `
               <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="8" y="14" width="32" height="20" rx="4" fill="#fafdff" stroke="#2563eb" stroke-width="2.2"/>
-                <path d="M24 14v20" stroke="#2563eb" stroke-width="1.6"/>
-                <path d="M8 17c5-2 10-2 16 0 6-2 11-2 16 0" stroke="#2563eb" stroke-width="1" fill="none"/>
+                <rect x="8" y="14" width="32" height="20" rx="4" fill="#fffdf9" stroke="#9c5b3f" stroke-width="2.2"/>
+                <path d="M24 14v20" stroke="#9c5b3f" stroke-width="1.6"/>
+                <path d="M8 17c5-2 10-2 16 0 6-2 11-2 16 0" stroke="#9c5b3f" stroke-width="1" fill="none"/>
               </svg>
               <div>まだジャーナルがありません<br>「新規作成」ボタンから始めましょう！</div>
             `;
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
             listItem.textContent = `${entry.theme.substring(0, 20)}${entry.theme.length > 20 ? '...' : ''}`;
             listItem.dataset.entryId = entry.id;
             if (entry.id === currentlyEditingEntryId) {
-                listItem.style.backgroundColor = '#cce5ff';
+                listItem.classList.add('selected');
             }
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'journal-actions';
