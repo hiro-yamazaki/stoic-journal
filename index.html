@@ -63,6 +63,7 @@
                 <button class="tab-button active" onclick="showTab('journal-tab')">ジャーナルを作成</button>
                 <button class="tab-button" onclick="showTab('input-preview-tab')">入力内容をみる</button>
                 <button class="tab-button" onclick="showTab('ai-response-tab')">フィードバックを表示</button>
+                <button class="tab-button" onclick="showTab('dialogue-tab')">賢人との対話</button>
             </div>
 
             <section id="journal-tab" class="tab-content active">
@@ -123,6 +124,28 @@
             <section id="ai-response-tab" class="tab-content">
                 <h2>フィードバックを表示</h2>
                 <div id="ai-response-preview" class="ai-preview-box"></div>
+            </section>
+
+            <section id="dialogue-tab" class="tab-content">
+                <h2>賢人との対話</h2>
+                <p id="dialogue-notice" class="dialogue-notice" style="display:none;">
+                    まずジャーナルを保存してください。保存したジャーナルごとに、賢人との対話を記録できます。
+                </p>
+                <div id="dialogue-body">
+                    <div id="dialogue-list" class="dialogue-list"></div>
+                    <div class="dialogue-compose">
+                        <textarea id="dialogue-input" rows="2" placeholder="賢人への問いかけ・今の気持ちを入力"></textarea>
+                        <div class="dialogue-compose-buttons">
+                            <button id="dialogue-send">自分の発言を追加</button>
+                            <button id="dialogue-ask-sage">賢人に聞く（プロンプトをコピー）</button>
+                        </div>
+                    </div>
+                    <div class="dialogue-sage-paste">
+                        <label for="sage-reply-input">賢人の返答（AIの返答を貼り付け）:</label>
+                        <textarea id="sage-reply-input" rows="3" placeholder="コピーしたプロンプトをAIに渡し、返ってきた返答をここに貼り付けます"></textarea>
+                        <button id="sage-reply-add">賢人の返答を追加</button>
+                    </div>
+                </div>
             </section>
 
             <footer>

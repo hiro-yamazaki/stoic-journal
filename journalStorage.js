@@ -70,6 +70,30 @@ class FirestoreJournalStorage {
     if (!user) throw new Error('未認証です');
     await this.collection.doc(id).delete();
   }
+
+  // ===== 賢人との対話（journals/{id}/dialogue サブコレクション） =====
+
+  // 対話メッセージを1件追加（role: "user" | "sage"）
+  async addDialogueMessage(journalId, role, text) {
+    const user = window.auth.currentUser;
+    if (!user) throw new Error('未認証です');
+    await this.collection.doc(journalId).collection('dialogue').add({
+      role: role,
+      text: text,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  // 対話をリアルタイム購読（05の onChildAdded 相当 = Firestore onSnapshot）
+  // 変更があるたび onChange(messages) を呼ぶ。戻り値は購読解除関数。
+  subscribeDialogue(journalId, onChange) {
+    return this.collection.doc(journalId).collection('dialogue')
+      .orderBy('createdAt', 'asc')
+      .onSnapshot(snapshot => {
+        const messages = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        onChange(messages);
+      });
+  }
 }
 
 window.FirestoreJournalStorage = FirestoreJournalStorage; 

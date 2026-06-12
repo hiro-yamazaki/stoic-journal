@@ -140,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updatedAtLabel.textContent = 'Update: ' + (entry.updatedAt ? formatDate(entry.updatedAt) : '--');
             }
             updateAiResponseButtonState();
+            openDialogueFor(entry.id);
         }
     }
 
@@ -256,6 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         updateAiResponseButtonState();
         updateSaveButtonStateAndEmptyMessage();
+        openDialogueFor(null);
     }
 
     function formatDate(dateStr) {
@@ -497,5 +499,126 @@ document.addEventListener('DOMContentLoaded', () => {
                 showSnackbar('プロンプトのコピーに失敗しました');
             });
     });
+
+    // ===== 賢人との対話（05のリアルタイムチャットを応用） =====
+    const dialogueList = document.getElementById('dialogue-list');
+    const dialogueInput = document.getElementById('dialogue-input');
+    const dialogueSendBtn = document.getElementById('dialogue-send');
+    const dialogueAskSageBtn = document.getElementById('dialogue-ask-sage');
+    const sageReplyInput = document.getElementById('sage-reply-input');
+    const sageReplyAddBtn = document.getElementById('sage-reply-add');
+    const dialogueNotice = document.getElementById('dialogue-notice');
+    const dialogueBody = document.getElementById('dialogue-body');
+    let dialogueUnsub = null;
+
+    // ジャーナルを開くたびに、その対話をリアルタイム購読し直す
+    function openDialogueFor(journalId) {
+        if (dialogueUnsub) { dialogueUnsub(); dialogueUnsub = null; }
+        if (!journalId) {
+            if (dialogueNotice) dialogueNotice.style.display = 'block';
+            if (dialogueBody) dialogueBody.style.display = 'none';
+            if (dialogueList) dialogueList.innerHTML = '';
+            return;
+        }
+        if (dialogueNotice) dialogueNotice.style.display = 'none';
+        if (dialogueBody) dialogueBody.style.display = 'block';
+        // onSnapshot = 05の onChildAdded 相当。追加された瞬間に再描画される
+        dialogueUnsub = storage.subscribeDialogue(journalId, renderDialogue);
+    }
+
+    function renderDialogue(messages) {
+        if (!dialogueList) return;
+        dialogueList.innerHTML = '';
+        if (!messages.length) {
+            const empty = document.createElement('div');
+            empty.className = 'dialogue-empty';
+            empty.textContent = 'まだ対話がありません。あなたの問いかけから始めましょう。';
+            dialogueList.appendChild(empty);
+        } else {
+            messages.forEach(m => {
+                const row = document.createElement('div');
+                row.className = 'dialogue-msg ' + (m.role === 'sage' ? 'sage' : 'user');
+                const who = document.createElement('div');
+                who.className = 'dialogue-who';
+                who.textContent = m.role === 'sage' ? '賢人' : 'あなた';
+                const bubble = document.createElement('div');
+                bubble.className = 'dialogue-bubble';
+                bubble.textContent = m.text; // .textContent でXSS安全
+                row.appendChild(who);
+                row.appendChild(bubble);
+                dialogueList.appendChild(row);
+            });
+        }
+        dialogueList.scrollTop = dialogueList.scrollHeight;
+    }
+
+    // 自分の発言を追加
+    if (dialogueSendBtn) {
+        dialogueSendBtn.addEventListener('click', async () => {
+            const text = (dialogueInput.value || '').trim();
+            if (!text) return;
+            if (!currentlyEditingEntryId) { showSnackbar('まずジャーナルを保存してください'); return; }
+            try {
+                await storage.addDialogueMessage(currentlyEditingEntryId, 'user', text);
+                dialogueInput.value = '';
+            } catch (e) {
+                showSnackbar('発言の追加に失敗しました（Firestoreルールを確認）');
+            }
+        });
+    }
+
+    // 賢人の返答を追加（外部AIの返答を貼り付け）
+    if (sageReplyAddBtn) {
+        sageReplyAddBtn.addEventListener('click', async () => {
+            const text = (sageReplyInput.value || '').trim();
+            if (!text) return;
+            if (!currentlyEditingEntryId) { showSnackbar('まずジャーナルを保存してください'); return; }
+            try {
+                await storage.addDialogueMessage(currentlyEditingEntryId, 'sage', text);
+                sageReplyInput.value = '';
+            } catch (e) {
+                showSnackbar('賢人の返答の追加に失敗しました（Firestoreルールを確認）');
+            }
+        });
+    }
+
+    // 賢人に聞く：ジャーナル＋対話履歴からプロンプトを生成しコピー（APIキー不要方式）
+    if (dialogueAskSageBtn) {
+        dialogueAskSageBtn.addEventListener('click', async () => {
+            if (!currentlyEditingEntryId) { showSnackbar('まずジャーナルを保存してください'); return; }
+            const theme = themeInput.value.trim();
+            const q1 = questionInput1.value.trim();
+            const a1 = answerInput1.value.trim();
+            const q2 = questionInput2.value.trim();
+            const a2 = answerInput2.value.trim();
+            // 現在表示中の対話を集める
+            let history = '';
+            dialogueList.querySelectorAll('.dialogue-msg').forEach(row => {
+                const who = row.classList.contains('sage') ? '賢人' : 'あなた';
+                const t = row.querySelector('.dialogue-bubble')?.textContent || '';
+                history += `${who}: ${t}\n`;
+            });
+            let p = '';
+            p += 'あなたはストア派の賢人（セネカ、エピクテトス、マルクス・アウレリウスのいずれか）です。\n';
+            p += '以下の私のジャーナルとこれまでの対話を踏まえ、賢人として一人称で、簡潔に（3〜5文）返答してください。\n';
+            p += '説教ではなく対話的に。必要なら問い返しを1つ含めてください。\n\n';
+            p += '# ジャーナル\n';
+            p += `テーマ: ${theme}\n`;
+            if (q1 || a1) p += `問い1: ${q1}\n私の解答1: ${a1}\n`;
+            if (q2 || a2) p += `問い2: ${q2}\n私の解答2: ${a2}\n`;
+            p += '\n# これまでの対話\n';
+            p += history ? history : '（まだ対話はありません）\n';
+            p += '\n# 出力\n賢人の返答本文のみ（名前や前置きは不要）。\n';
+            try {
+                await navigator.clipboard.writeText(p);
+                showSnackbar('賢人へのプロンプトをコピーしました。AIの返答を下の欄に貼り付けてください');
+            } catch (e) {
+                showSnackbar('プロンプトのコピーに失敗しました');
+            }
+        });
+    }
+
+    // 初期状態（まだジャーナル未選択なら案内を表示）
+    openDialogueFor(currentlyEditingEntryId || null);
 
 }); // DOMContentLoaded の終わり 

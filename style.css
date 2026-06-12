@@ -622,3 +622,84 @@ footer {
         padding-bottom: 18px;
     }
 }
+
+/* ===== 賢人との対話 ===== */
+.dialogue-notice {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    padding: 12px 14px;
+    border-radius: 8px;
+    line-height: 1.6;
+}
+.dialogue-list {
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.dialogue-empty {
+    color: #94a3b8;
+    text-align: center;
+    padding: 28px 0;
+}
+.dialogue-msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 80%;
+}
+.dialogue-msg.user {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+.dialogue-msg.sage {
+    align-self: flex-start;
+    align-items: flex-start;
+}
+.dialogue-who {
+    font-size: 0.8em;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+.dialogue-bubble {
+    padding: 10px 14px;
+    border-radius: 14px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.dialogue-msg.user .dialogue-bubble {
+    background: #2563eb;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+.dialogue-msg.sage .dialogue-bubble {
+    background: #fff;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    border-bottom-left-radius: 4px;
+}
+.dialogue-compose {
+    margin-top: 14px;
+}
+.dialogue-compose textarea,
+.dialogue-sage-paste textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+.dialogue-compose-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+.dialogue-sage-paste {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px dashed #cbd5e1;
+}
