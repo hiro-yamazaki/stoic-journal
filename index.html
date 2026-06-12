@@ -71,43 +71,49 @@
             </div>
 
             <section id="journal-tab" class="tab-content active">
-                <h2>ジャーナル作成・編集</h2>
-                <div class="meta-dates">
-                    <span id="created-at-label">Create: --</span>
-                    <span id="updated-at-label">Update: --</span>
+                <div class="form-head">
+                    <h2>ジャーナル作成・編集</h2>
+                    <div class="meta-dates">
+                        <span id="created-at-label">Create: --</span>
+                        <span id="updated-at-label">Update: --</span>
+                    </div>
                 </div>
-                <div>
-                    <label for="theme-input">テーマ:</label>
-                    <input type="text" id="theme-input" placeholder="思索のテーマを自由に入力 (例: 自制、感謝)">
+
+                <div class="field field--primary">
+                    <label for="theme-input">テーマ</label>
+                    <input type="text" id="theme-input" placeholder="思索のテーマを自由に入力（例: 自制、感謝）">
                 </div>
-                <div>
-                    <label for="memo-input">メモ:</label>
+
+                <div class="qa-group">
+                    <div class="section-label">省察</div>
+                    <div class="qa-pair">
+                        <label for="question-input-1">問い 1</label>
+                        <textarea id="question-input-1" rows="1" placeholder="1つ目の問いを入力"></textarea>
+                        <label for="answer-input-1">解答 1</label>
+                        <textarea id="answer-input-1" rows="4" placeholder="1つ目の問いへの解答を入力"></textarea>
+                    </div>
+                    <div class="qa-pair">
+                        <label for="question-input-2">問い 2</label>
+                        <textarea id="question-input-2" rows="1" placeholder="2つ目の問いを入力"></textarea>
+                        <label for="answer-input-2">解答 2</label>
+                        <textarea id="answer-input-2" rows="4" placeholder="2つ目の問いへの解答を入力"></textarea>
+                    </div>
+                </div>
+
+                <div class="field field--memo">
+                    <label for="memo-input">メモ</label>
                     <textarea id="memo-input" rows="3" placeholder="自由メモや気づきなど"></textarea>
                 </div>
-                <div>
-                    <label for="question-input-1">問い その1:</label>
-                    <textarea id="question-input-1" rows="1" placeholder="1つ目の問いを入力"></textarea>
-                </div>
-                <div>
-                    <label for="answer-input-1">解答 その1:</label>
-                    <textarea id="answer-input-1" rows="4" placeholder="1つ目の問いへの解答を入力"></textarea>
-                </div>
-                <div>
-                    <label for="question-input-2">問い その2:</label>
-                    <textarea id="question-input-2" rows="1" placeholder="2つ目の問いを入力"></textarea>
-                </div>
-                <div>
-                    <label for="answer-input-2">解答 その2:</label>
-                    <textarea id="answer-input-2" rows="4" placeholder="2つ目の問いへの解答を入力"></textarea>
-                </div>
+
                 <div class="save-buttons-row">
-                    <button id="save-button">ここまでを保存</button>
-                    <button id="copy-ai-prompt-button">AIプロンプトをコピー</button>
+                    <button id="save-button">保存する</button>
+                    <button id="save-and-copy-button" class="special-fab">保存してAIプロンプトをコピー</button>
+                    <button id="copy-ai-prompt-button">プロンプトのみコピー</button>
+                    <button id="delete-button" style="display: none;">このジャーナルを削除</button>
                 </div>
-                <button id="save-and-copy-button" class="special-fab">保存＋AIプロンプトをコピー</button>
-                <button id="delete-button" style="background-color: #dc3545; display: none;">削除</button>
+
                 <div class="ai-feedback-area">
-                    <label for="ai-response-input">AIフィードバック（マークダウン可）:</label>
+                    <label for="ai-response-input">AIフィードバック（マークダウン可）</label>
                     <textarea id="ai-response-input" rows="6" placeholder="AIからの返答をここに貼り付けます"></textarea>
                     <button id="save-ai-response-button">AI返答を保存</button>
                 </div>
