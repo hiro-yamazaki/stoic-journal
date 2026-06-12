@@ -324,11 +324,71 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // --- 初回ログイン用のサンプル ---
+    const SAMPLE_ENTRIES = [
+        {
+            theme: 'コントロールの二分法',
+            memo: '（サンプル）自分で変えられることと、そうでないことを分ける練習。',
+            questions: [
+                { question: '今日、自分にはどうにもできない事に心を乱された瞬間は？', answer: '電車の遅延で予定が崩れ、苛立ってしまった。' },
+                { question: 'そのうち「自分に変えられる部分」は何だった？', answer: '遅延そのものは変えられないが、待ち時間に何をするかは選べた。' }
+            ],
+            aiResponse: '',
+            _thoughts: ['遅延は天気と同じ。怒っても電車は早く来ない。', '次は待ち時間に読む本を1冊カバンに入れておく。']
+        },
+        {
+            theme: '夜の振り返り（感謝）',
+            memo: '（サンプル）一日の終わりに、当たり前を見直す。',
+            questions: [
+                { question: '今日あった小さな良いことを3つ挙げると？', answer: '温かいコーヒー、同僚の一言、静かな夜。' },
+                { question: 'それは「当たり前」ではなく「有り難い」と言えるのはなぜ？', answer: 'どれも、無くなって初めて大きさに気づくものだから。' }
+            ],
+            aiResponse: ''
+        },
+        {
+            theme: 'ネガティブ・ビジュアライゼーション',
+            memo: '（サンプル）最悪を先に思い描き、今あるものに感謝する技法。',
+            questions: [
+                { question: 'もし今日が最後の一日なら、誰に何を伝えたい？', answer: '家族に素直に「ありがとう」と言いたい。' },
+                { question: 'その気持ちを、今日の行動にどう一つだけ反映できる？', answer: '帰ったら一言、感謝を口に出して伝える。' }
+            ],
+            aiResponse: ''
+        }
+    ];
+
+    // 初回ログイン（このブラウザで未投入 かつ ジャーナル0件）のときだけサンプルを作成
+    async function seedSamplesIfFirstTime(user) {
+        const flagKey = 'stoic_seeded_' + user.uid;
+        if (localStorage.getItem(flagKey)) return false;
+        if (journalEntries.length > 0) { localStorage.setItem(flagKey, '1'); return false; }
+        try {
+            for (const s of SAMPLE_ENTRIES) {
+                const created = await storage.addJournal({
+                    theme: s.theme, memo: s.memo, questions: s.questions, aiResponse: s.aiResponse
+                });
+                if (s._thoughts && created && created.id) {
+                    for (const t of s._thoughts) {
+                        // 対話ルール未設定でもサンプル本体は残す
+                        try { await storage.addThought(created.id, t); } catch (e) { /* noop */ }
+                    }
+                }
+            }
+            localStorage.setItem(flagKey, '1');
+            return true;
+        } catch (e) {
+            return false; // journalsルール未設定時などはサンプル無しで継続
+        }
+    }
+
     // --- ジャーナル一覧を再取得して描画する関数 ---
     async function loadJournalEntries() {
         const user = auth.currentUser;
         if (!user) return;
         journalEntries = await storage.getAllJournals();
+        // 初回ログイン時のみ、サンプルを2〜3件投入してから再取得
+        if (await seedSamplesIfFirstTime(user)) {
+            journalEntries = await storage.getAllJournals();
+        }
         renderJournalList();
         // localStorageから直前のIDを取得し自動表示
         const lastId = localStorage.getItem('lastEditingEntryId');
