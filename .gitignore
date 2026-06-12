@@ -1,0 +1,12 @@
+# Firebase 設定（APIキーを含むため GitHub に載せない）
+firebase.js
+
+# macOS
+.DS_Store
+
+# Playwright MCP 動作確認の副産物
+.playwright-mcp/
+
+# エディタ
+*.code-workspace
+.vscode/

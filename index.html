@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ストイックジャーナル</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/yakuhanjp@3.4.1/dist/css/yakuhanjp.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked@3.0.8/marked.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="firebase.js"></script>
+    <script src="journalStorage.js"></script>
+    <script>
+      // 認証チェック: 未ログインならlogin.htmlへリダイレクト
+      window.addEventListener('DOMContentLoaded', function() {
+        firebase.auth().onAuthStateChanged(function(user) {
+          if (!user) {
+            window.location.href = 'login.html';
+          }
+        });
+      });
+    </script>
+</head>
+<body>
+    <div class="loading-overlay" id="loading-overlay" style="display:none;">
+      <div class="loading-spinner"></div>
+    </div>
+    <div class="snackbar" id="snackbar"></div>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>ジャーナルリスト</h2>
+            <button id="new-entry-button" class="new-entry-btn">新規作成</button>
+            <ul id="journal-list">
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="main-header">
+                <div class="logo-area">
+                    <span class="stoic-logo">
+                        <!-- 本モチーフのシンプルSVGロゴ -->
+                        <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="7" y="10" width="24" height="18" rx="3" fill="#fafdff" stroke="#2563eb" stroke-width="2.5"/>
+                          <path d="M19 10v18" stroke="#2563eb" stroke-width="2"/>
+                          <path d="M7 13c4-2 8-2 12 0 4-2 8-2 12 0" stroke="#2563eb" stroke-width="1.2" fill="none"/>
+                        </svg>
+                    </span>
+                    <span class="logo-text">Stoic journal</span>
+                </div>
+                <div class="date-area">
+                    <span id="current-date">2023年5月15日 月曜日</span>
+                </div>
+                <div class="auth-area">
+                    <span id="user-info" style="margin-right:10px;"></span>
+                    <button id="sign-in-btn" style="display:none;">Googleでサインイン</button>
+                    <button id="sign-out-btn" style="display:none;">サインアウト</button>
+                </div>
+            </header>
+
+            <div class="tabs">
+                <button class="tab-button active" onclick="showTab('journal-tab')">ジャーナルを作成</button>
+                <button class="tab-button" onclick="showTab('input-preview-tab')">入力内容をみる</button>
+                <button class="tab-button" onclick="showTab('ai-response-tab')">フィードバックを表示</button>
+            </div>
+
+            <section id="journal-tab" class="tab-content active">
+                <h2>ジャーナル作成・編集</h2>
+                <div class="meta-dates">
+                    <span id="created-at-label">Create: --</span>
+                    <span id="updated-at-label">Update: --</span>
+                </div>
+                <div>
+                    <label for="theme-input">テーマ:</label>
+                    <input type="text" id="theme-input" placeholder="思索のテーマを自由に入力 (例: 自制、感謝)">
+                </div>
+                <div>
+                    <label for="memo-input">メモ:</label>
+                    <textarea id="memo-input" rows="3" placeholder="自由メモや気づきなど"></textarea>
+                </div>
+                <div>
+                    <label for="question-input-1">問い その1:</label>
+                    <textarea id="question-input-1" rows="1" placeholder="1つ目の問いを入力"></textarea>
+                </div>
+                <div>
+                    <label for="answer-input-1">解答 その1:</label>
+                    <textarea id="answer-input-1" rows="4" placeholder="1つ目の問いへの解答を入力"></textarea>
+                </div>
+                <div>
+                    <label for="question-input-2">問い その2:</label>
+                    <textarea id="question-input-2" rows="1" placeholder="2つ目の問いを入力"></textarea>
+                </div>
+                <div>
+                    <label for="answer-input-2">解答 その2:</label>
+                    <textarea id="answer-input-2" rows="4" placeholder="2つ目の問いへの解答を入力"></textarea>
+                </div>
+                <div class="save-buttons-row">
+                    <button id="save-button">ここまでを保存</button>
+                    <button id="copy-ai-prompt-button">AIプロンプトをコピー</button>
+                </div>
+                <button id="save-and-copy-button" class="special-fab">保存＋AIプロンプトをコピー</button>
+                <button id="delete-button" style="background-color: #dc3545; display: none;">削除</button>
+                <div class="ai-feedback-area">
+                    <label for="ai-response-input">AIフィードバック（マークダウン可）:</label>
+                    <textarea id="ai-response-input" rows="6" placeholder="AIからの返答をここに貼り付けます"></textarea>
+                    <button id="save-ai-response-button">AI返答を保存</button>
+                </div>
+            </section>
+
+            <section id="input-preview-tab" class="tab-content">
+                <h2>入力内容プレビュー</h2>
+                <div id="input-preview-box" class="input-preview-grid3">
+                    <div class="theme-cell"></div>
+                    <div class="memo-cell"></div>
+                    <div class="question1-cell"></div>
+                    <div class="answer1-cell"></div>
+                    <div class="question2-cell"></div>
+                    <div class="answer2-cell"></div>
+                </div>
+            </section>
+
+            <section id="ai-response-tab" class="tab-content">
+                <h2>フィードバックを表示</h2>
+                <div id="ai-response-preview" class="ai-preview-box"></div>
+            </section>
+
+            <footer>
+                
+            </footer>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

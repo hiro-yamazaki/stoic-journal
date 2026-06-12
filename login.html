@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ログイン | Stoic Journal</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="firebase.js"></script>
+</head>
+<body>
+    <div class="container" style="justify-content:center;align-items:center;height:100vh;display:flex;">
+        <div style="text-align:center;width:100%;">
+            <h1>Stoic Journal</h1>
+            <p>Googleアカウントでログインしてください</p>
+            <button id="google-login-btn" style="padding:14px 32px;font-size:1.1em;">Googleでログイン</button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('google-login-btn').addEventListener('click', function() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+                .then(() => {
+                    window.location.href = 'index.html';
+                })
+                .catch((error) => {
+                    alert('ログインに失敗しました: ' + (error.message || error));
+                });
+        });
+    </script>
+</body>
+</html> 
