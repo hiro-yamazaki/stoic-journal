@@ -10,3 +10,9 @@ firebase.js
 # エディタ
 *.code-workspace
 .vscode/
+
+# Firebase Hosting（デプロイ設定・ローカルのみ／GitHubには出さない）
+firebase.json
+.firebaserc
+.firebase/
+firebase-debug.log
