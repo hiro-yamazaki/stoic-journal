@@ -73,14 +73,26 @@ class FirestoreJournalStorage {
 
   // ===== 賢人との対話（journals/{id}/dialogue サブコレクション） =====
 
-  // 対話メッセージを1件追加（role: "user" | "sage"）
-  async addDialogueMessage(journalId, role, text) {
+  // 「頭の中」を1件書き出す（自分との対話）
+  async addThought(journalId, text) {
     const user = window.auth.currentUser;
     if (!user) throw new Error('未認証です');
     await this.collection.doc(journalId).collection('dialogue').add({
-      role: role,
       text: text,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      comments: []
+    });
+  }
+
+  // 書き出した内容に「コメント（自分への対話）」を追加
+  async addComment(journalId, thoughtId, text) {
+    const user = window.auth.currentUser;
+    if (!user) throw new Error('未認証です');
+    await this.collection.doc(journalId).collection('dialogue').doc(thoughtId).update({
+      comments: firebase.firestore.FieldValue.arrayUnion({
+        text: text,
+        createdAt: new Date().toISOString()
+      })
     });
   }
 

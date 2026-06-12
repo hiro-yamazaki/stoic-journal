@@ -500,18 +500,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     });
 
-    // ===== 賢人との対話（05のリアルタイムチャットを応用） =====
+    // ===== 自分との対話（書き出し＋コメント / 05のリアルタイム購読を応用） =====
     const dialogueList = document.getElementById('dialogue-list');
-    const dialogueInput = document.getElementById('dialogue-input');
-    const dialogueSendBtn = document.getElementById('dialogue-send');
-    const dialogueAskSageBtn = document.getElementById('dialogue-ask-sage');
-    const sageReplyInput = document.getElementById('sage-reply-input');
-    const sageReplyAddBtn = document.getElementById('sage-reply-add');
+    const thoughtInput = document.getElementById('thought-input');
+    const thoughtAddBtn = document.getElementById('thought-add');
     const dialogueNotice = document.getElementById('dialogue-notice');
     const dialogueBody = document.getElementById('dialogue-body');
     let dialogueUnsub = null;
 
-    // ジャーナルを開くたびに、その対話をリアルタイム購読し直す
+    // ジャーナルを開くたびに、その書き出しをリアルタイム購読し直す
     function openDialogueFor(journalId) {
         if (dialogueUnsub) { dialogueUnsub(); dialogueUnsub = null; }
         if (!journalId) {
@@ -522,98 +519,94 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (dialogueNotice) dialogueNotice.style.display = 'none';
         if (dialogueBody) dialogueBody.style.display = 'block';
-        // onSnapshot = 05の onChildAdded 相当。追加された瞬間に再描画される
+        // onSnapshot = 05の onChildAdded 相当。書き出し・コメントの瞬間に再描画される
         dialogueUnsub = storage.subscribeDialogue(journalId, renderDialogue);
     }
 
-    function renderDialogue(messages) {
+    function renderDialogue(thoughts) {
         if (!dialogueList) return;
         dialogueList.innerHTML = '';
-        if (!messages.length) {
+        if (!thoughts.length) {
             const empty = document.createElement('div');
             empty.className = 'dialogue-empty';
-            empty.textContent = 'まだ対話がありません。あなたの問いかけから始めましょう。';
+            empty.textContent = 'まだ何も書き出していません。頭の中にあるものを、そのまま書いてみましょう。';
             dialogueList.appendChild(empty);
-        } else {
-            messages.forEach(m => {
-                const row = document.createElement('div');
-                row.className = 'dialogue-msg ' + (m.role === 'sage' ? 'sage' : 'user');
-                const who = document.createElement('div');
-                who.className = 'dialogue-who';
-                who.textContent = m.role === 'sage' ? '賢人' : 'あなた';
-                const bubble = document.createElement('div');
-                bubble.className = 'dialogue-bubble';
-                bubble.textContent = m.text; // .textContent でXSS安全
-                row.appendChild(who);
-                row.appendChild(bubble);
-                dialogueList.appendChild(row);
-            });
+            return;
         }
+        thoughts.forEach(t => {
+            const card = document.createElement('div');
+            card.className = 'thought-card';
+
+            // 書き出した本文
+            const bubble = document.createElement('div');
+            bubble.className = 'thought-bubble';
+            bubble.textContent = t.text; // .textContent でXSS安全
+            card.appendChild(bubble);
+
+            // コメント（自分との対話）一覧
+            const comments = Array.isArray(t.comments) ? t.comments : [];
+            if (comments.length) {
+                const clist = document.createElement('div');
+                clist.className = 'thought-comments';
+                comments.forEach(c => {
+                    const cb = document.createElement('div');
+                    cb.className = 'thought-comment';
+                    cb.textContent = c.text;
+                    clist.appendChild(cb);
+                });
+                card.appendChild(clist);
+            }
+
+            // コメント追加フォーム（最初は隠す）
+            const form = document.createElement('div');
+            form.className = 'thought-comment-form';
+            form.style.display = 'none';
+            const cinput = document.createElement('textarea');
+            cinput.rows = 2;
+            cinput.placeholder = 'この書き出しに、いまの自分から返してみる';
+            const csubmit = document.createElement('button');
+            csubmit.textContent = '追加';
+            csubmit.addEventListener('click', async () => {
+                const text = (cinput.value || '').trim();
+                if (!text) return;
+                try {
+                    await storage.addComment(currentlyEditingEntryId, t.id, text);
+                    cinput.value = '';
+                } catch (e) {
+                    showSnackbar('コメントの追加に失敗しました（Firestoreルールを確認）');
+                }
+            });
+            form.appendChild(cinput);
+            form.appendChild(csubmit);
+
+            // 「コメント」ボタン → 対話フォームを開閉
+            const toggle = document.createElement('button');
+            toggle.className = 'thought-comment-toggle';
+            toggle.textContent = 'コメント';
+            toggle.addEventListener('click', () => {
+                form.style.display = (form.style.display === 'none') ? 'block' : 'none';
+                if (form.style.display === 'block') cinput.focus();
+            });
+
+            card.appendChild(toggle);
+            card.appendChild(form);
+            dialogueList.appendChild(card);
+        });
         dialogueList.scrollTop = dialogueList.scrollHeight;
     }
 
-    // 自分の発言を追加
-    if (dialogueSendBtn) {
-        dialogueSendBtn.addEventListener('click', async () => {
-            const text = (dialogueInput.value || '').trim();
+    // 「書き出す」：頭の中を1件追加
+    if (thoughtAddBtn) {
+        thoughtAddBtn.addEventListener('click', async () => {
+            const text = (thoughtInput.value || '').trim();
             if (!text) return;
             if (!currentlyEditingEntryId) { showSnackbar('まずジャーナルを保存してください'); return; }
             try {
-                await storage.addDialogueMessage(currentlyEditingEntryId, 'user', text);
-                dialogueInput.value = '';
+                await storage.addThought(currentlyEditingEntryId, text);
+                thoughtInput.value = '';
+                thoughtInput.focus();
             } catch (e) {
-                showSnackbar('発言の追加に失敗しました（Firestoreルールを確認）');
-            }
-        });
-    }
-
-    // 賢人の返答を追加（外部AIの返答を貼り付け）
-    if (sageReplyAddBtn) {
-        sageReplyAddBtn.addEventListener('click', async () => {
-            const text = (sageReplyInput.value || '').trim();
-            if (!text) return;
-            if (!currentlyEditingEntryId) { showSnackbar('まずジャーナルを保存してください'); return; }
-            try {
-                await storage.addDialogueMessage(currentlyEditingEntryId, 'sage', text);
-                sageReplyInput.value = '';
-            } catch (e) {
-                showSnackbar('賢人の返答の追加に失敗しました（Firestoreルールを確認）');
-            }
-        });
-    }
-
-    // 賢人に聞く：ジャーナル＋対話履歴からプロンプトを生成しコピー（APIキー不要方式）
-    if (dialogueAskSageBtn) {
-        dialogueAskSageBtn.addEventListener('click', async () => {
-            if (!currentlyEditingEntryId) { showSnackbar('まずジャーナルを保存してください'); return; }
-            const theme = themeInput.value.trim();
-            const q1 = questionInput1.value.trim();
-            const a1 = answerInput1.value.trim();
-            const q2 = questionInput2.value.trim();
-            const a2 = answerInput2.value.trim();
-            // 現在表示中の対話を集める
-            let history = '';
-            dialogueList.querySelectorAll('.dialogue-msg').forEach(row => {
-                const who = row.classList.contains('sage') ? '賢人' : 'あなた';
-                const t = row.querySelector('.dialogue-bubble')?.textContent || '';
-                history += `${who}: ${t}\n`;
-            });
-            let p = '';
-            p += 'あなたはストア派の賢人（セネカ、エピクテトス、マルクス・アウレリウスのいずれか）です。\n';
-            p += '以下の私のジャーナルとこれまでの対話を踏まえ、賢人として一人称で、簡潔に（3〜5文）返答してください。\n';
-            p += '説教ではなく対話的に。必要なら問い返しを1つ含めてください。\n\n';
-            p += '# ジャーナル\n';
-            p += `テーマ: ${theme}\n`;
-            if (q1 || a1) p += `問い1: ${q1}\n私の解答1: ${a1}\n`;
-            if (q2 || a2) p += `問い2: ${q2}\n私の解答2: ${a2}\n`;
-            p += '\n# これまでの対話\n';
-            p += history ? history : '（まだ対話はありません）\n';
-            p += '\n# 出力\n賢人の返答本文のみ（名前や前置きは不要）。\n';
-            try {
-                await navigator.clipboard.writeText(p);
-                showSnackbar('賢人へのプロンプトをコピーしました。AIの返答を下の欄に貼り付けてください');
-            } catch (e) {
-                showSnackbar('プロンプトのコピーに失敗しました');
+                showSnackbar('書き出しの保存に失敗しました（Firestoreルールを確認）');
             }
         });
     }
