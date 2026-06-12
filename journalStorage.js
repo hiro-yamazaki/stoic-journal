@@ -3,7 +3,17 @@ const DEMO_USER_ID = 'demo_user'; // 本番は認証連携
 
 class FirestoreJournalStorage {
   constructor() {
-    this.collection = window.db.collection(COLLECTION);
+    // window.db 未設定（firebase.js 未読込）でも生成時に落ちないよう遅延取得にする
+    this._collection = null;
+  }
+
+  // Firestore のコレクション参照（初回アクセス時に取得）
+  get collection() {
+    if (!this._collection) {
+      if (!window.db) throw new Error('Firebase未初期化（firebase.js が読み込まれていません）');
+      this._collection = window.db.collection(COLLECTION);
+    }
+    return this._collection;
   }
 
   // 全ジャーナル取得（認証ユーザーのみ）

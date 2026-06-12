@@ -401,15 +401,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 初期ロード ---
-    window.auth.onAuthStateChanged(user => {
-        if (user) {
-            loadJournalEntries();
-        } else {
-            journalEntries = [];
-            renderJournalList();
-            prepareNewEntryForm();
-        }
-    });
+    // window.auth が無い（firebase.js 未読込）場合でも静的UIは表示できるようガード
+    if (window.auth && typeof window.auth.onAuthStateChanged === 'function') {
+        window.auth.onAuthStateChanged(user => {
+            if (user) {
+                loadJournalEntries();
+            } else {
+                journalEntries = [];
+                renderJournalList();
+                prepareNewEntryForm();
+            }
+        });
+    }
 
     // --- 新規作成ボタンのイベントリスナー ---
     const newEntryButton = document.getElementById('new-entry-button');
