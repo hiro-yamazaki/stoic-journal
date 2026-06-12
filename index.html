@@ -16,7 +16,9 @@
     <script src="journalStorage.js"></script>
     <script>
       // 認証チェック: 未ログインならlogin.htmlへリダイレクト
+      // ※ firebase 未初期化（firebase.js 未読込）の場合は静的表示のみで止める
       window.addEventListener('DOMContentLoaded', function() {
+        if (!window.firebase || !firebase.apps || !firebase.apps.length) return;
         firebase.auth().onAuthStateChanged(function(user) {
           if (!user) {
             window.location.href = 'login.html';
